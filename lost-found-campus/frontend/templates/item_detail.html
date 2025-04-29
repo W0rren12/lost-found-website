@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ item.title }} - Details</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    /* Item detail header */
+    .item-detail { max-width: 600px; margin: 2rem auto; background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .item-detail img { width: 100%; height: auto; border-radius: 4px; margin-bottom: 1rem; }
+    .item-detail h1 { margin: 0 0 0.5rem; }
+    .item-detail p { margin: 0.25rem 0; color: #555; }
+
+    /* Forum section */
+    .forum { max-width: 600px; margin: 2rem auto; }
+    .forum h2 { margin-bottom: 1rem; }
+    .forum textarea { width: 100%; height: 80px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+    .forum button.post { margin-top: 0.5rem; padding: 0.5rem 1rem; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+
+    /* Comment box */
+    .comment-box { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 1rem; margin-bottom: 1rem; position: relative; }
+    .comment-header { font-size: 0.875rem; color: #777; margin-bottom: 0.5rem; }
+    .comment-actions { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; }
+    .comment-actions button { background: transparent; border: none; cursor: pointer; color: #e53935; }
+
+    /* Reply box style */
+    .reply-box { background: #f9f9f9; border-left: 4px solid #007bff; margin-left: 2rem; padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; position: relative; }
+    .reply-header { font-size: 0.8125rem; color: #555; margin-bottom: 0.5rem; }
+    .reply-actions { position: absolute; top: 0.75rem; right: 0.75rem; }
+    .reply-actions button { background: transparent; border: none; cursor: pointer; color: #e53935; }
+
+    /* Reply form under each comment */
+    .reply-form { margin-left: 2rem; margin-top: 0.5rem; }
+    .reply-form textarea { height: 60px; }
+    .reply-form button { margin-top: 0.25rem; padding: 0.25rem 0.5rem; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+
+  </style>
+</head>
+<body>
+
+  <div class="item-detail">
+    <img src="{{ item.image_url or url_for('static', filename='default-item.png') }}" alt="{{ item.title }}">
+    <h1>{{ item.title }}</h1>
+    <p><strong>Location:</strong> {{ item.location or 'N/A' }}</p>
+    <p><strong>Posted by:</strong> {{ item.owner }}</p>
+  </div>
+
+  <section class="forum">
+    <h2>Discussion</h2>
+    <!-- New comment form -->
+    <form id="commentForm" onsubmit="postComment(event)">
+      <textarea id="commentText" placeholder="Type your finding here..." required></textarea>
+      <button class="post" type="submit">Post</button>
+    </form>
+
+    <!-- Comments list -->
+    <div id="commentsList">
+      {% for comment in comments %}
+      <div class="comment-box" id="comment-{{ comment.id }}">
+        <div class="comment-header">{{ comment.user }} • {{ comment.created_at }}</div>
+        <div class="comment-actions">
+          {% if comment.user == current_user %}
+            <button onclick="deleteComment({{ comment.id }})" title="Delete">🗑️</button>
+          {% endif %}
+          <button onclick="toggleReplyForm({{ comment.id }})" title="Reply">💬</button>
+        </div>
+        <p>{{ comment.text }}</p>
+
+        <!-- Reply form (hidden by default) -->
+        <div class="reply-form hidden" id="reply-form-{{ comment.id }}">
+          <textarea id="replyText-{{ comment.id }}" placeholder="Reply..."></textarea>
+          <button onclick="postReply(event, {{ comment.id }})">Reply</button>
+        </div>
+
+        <!-- Replies -->
+        {% for reply in comment.replies %}
+        <div class="reply-box" id="reply-{{ reply.id }}">
+          <div class="reply-header">{{ reply.user }} • {{ reply.created_at }}</div>
+          <div class="reply-actions">
+            {% if reply.user == current_user %}
+              <button onclick="deleteReply({{ reply.id }})" title="Delete">🗑️</button>
+            {% endif %}
+          </div>
+          <p>{{ reply.text }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <script>
+    function postComment(e) {
+      e.preventDefault();
+      const text = document.getElementById('commentText').value;
+      fetch('{{ url_for('post_comment', item_id=item._id) }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      }).then(r => r.json()).then(() => location.reload());
+    }
+    function deleteComment(id) {
+      fetch(`/comments/${id}`, { method: 'DELETE' }).then(() => location.reload());
+    }
+    function toggleReplyForm(id) {
+      document.getElementById(`reply-form-${id}`).classList.toggle('hidden');
+    }
+    function postReply(e, commentId) {
+      e.preventDefault();
+      const text = document.getElementById(`replyText-${commentId}`).value;
+      fetch(`/comments/${commentId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      }).then(() => location.reload());
+    }
+    function deleteReply(id) {
+      fetch(`/replies/${id}`, { method: 'DELETE' }).then(() => location.reload());
+    }
+  </script>
+</body>
+</html>

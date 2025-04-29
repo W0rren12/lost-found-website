@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LostFoundApp - Main</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <!-- Leaflet CSS for map view -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-sA+e2H1tVTn1fL0sA2B04cnP5pFttwY+gFZ5SV0gC+I="
+    crossorigin=""
+  />
+</head>
+<body>
+  <header class="container">
+    <input
+      id="search-bar"
+      type="text"
+      placeholder="Search by ID, topic, item name, user..."
+      onkeyup="onSearch(event)"
+      class="button"
+    />
+  </header>
+
+  <!-- Profile and Add icons -->
+  <a id="profile-icon" href="/profile">
+    <img src="/static/icons/user.svg" alt="Profile" width="32" height="32" />
+  </a>
+  <a id="add-icon" href="/items/submit" title="Submit new item" class="button">+</a>
+
+  <main class="container" style="padding-top: 4rem;">
+    <div id="view-toggle">
+      <button class="button" onclick="showBoxes()">Box View</button>
+      <button class="button" onclick="showMap()">Map View</button>
+    </div>
+
+    <!-- Box-style listing -->
+    <div id="items-container" class="box-view">
+      {% for item in items %}
+      <div class="item-card" onclick="location.href='/items/{{ item._id }}'">
+        <h3>{{ item.title }}</h3>
+        <p>Status: {{ item.status }}</p>
+        <p>Owner: {{ item.owner }}</p>
+        <p>Location: {{ item.location or 'N/A' }}</p>
+        <small>Created: {{ item.created_at }}</small>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Map-style listing -->
+    <div id="map-container" class="map-view hidden"></div>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+    integrity="sha256-QV4S+ZLlh3E2GH5mA6vRfG3kZZgNXv1p+Cn9wRDf0PE="
+    crossorigin=""
+  ></script>
+  <script>
+    let map;
+    function initMap() {
+      map = L.map('map-container').setView([0, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Add markers
+      {% for item in items %}
+        {% if item.location_coords %}
+      L.marker([
+        {{ item.location_coords.coordinates[1] }},
+        {{ item.location_coords.coordinates[0] }}
+      ])
+      .addTo(map)
+      .bindPopup(`
+        <strong>{{ item.title }}</strong><br>
+        {{ item.location }}<br>
+        <a href="/items/{{ item._id }}">Details</a>
+      `);
+        {% endif %}
+      {% endfor %}
+    }
+
+    function showBoxes() {
+      document.getElementById('items-container').classList.remove('hidden');
+      document.getElementById('map-container').classList.add('hidden');
+    }
+    function showMap() {
+      document.getElementById('items-container').classList.add('hidden');
+      document.getElementById('map-container').classList.remove('hidden');
+      if (!map) initMap();
+    }
+
+    function onSearch(e) {
+      if (e.key === 'Enter') {
+        const q = e.target.value;
+        window.location.href = `/items?search=${encodeURIComponent(q)}`;
+      }
+    }
+  </script>
+</body>
+</html>

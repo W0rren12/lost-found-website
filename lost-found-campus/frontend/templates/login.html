@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - LostFoundApp</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <div class="container" style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+    <div class="login-container">
+      <h1>Login</h1>
+      {% if error %}
+        <div class="error-message">{{ error }}</div>
+      {% endif %}
+      <form action="{{ url_for('login') }}" method="post" id="loginForm">
+        <input type="text" name="email" placeholder="Email" required class="button" />
+        <input type="password" name="password" placeholder="Password" required class="button" />
+        <div class="button-group">
+          <button type="submit" class="button">
+            <img src="{{ url_for('static', filename='icons/login.svg') }}" alt="Login" />Login
+          </button>
+          <a href="{{ url_for('register') }}" class="button">
+            <img src="{{ url_for('static', filename='icons/register.svg') }}" alt="Register" />Register
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Clear form inputs on error
+    {% if error %}
+      document.getElementById('loginForm').reset();
+    {% endif %}
+  </script>
+</body>
+</html>

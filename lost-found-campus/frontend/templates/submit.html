@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Item - LostFoundApp</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-sA+e2H1tVTn1fL0sA2B04cnP5pFttwY+gFZ5SV0gC+I="
+    crossorigin=""
+  />
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 2rem; }
+    .submit-container { max-width: 600px; margin: auto; background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .submit-container h1 { text-align: center; font-size: 2rem; margin-bottom: 1rem; }
+    .submit-container label { display: block; margin-top: 1rem; font-weight: bold; }
+    .submit-container input[type="text"],
+    .submit-container textarea,
+    .submit-container input[type="file"] { width: 100%; padding: 0.5rem; margin-top: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    .submit-container textarea { resize: vertical; height: 100px; }
+    #map { height: 300px; margin-top: 1rem; border: 1px solid #ccc; border-radius: 4px; }
+    .submit-button { margin-top: 1.5rem; text-align: center; }
+    .submit-button button { background: #28a745; color: #fff; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; }
+    .submit-button img { width: 20px; height: 20px; margin-right: 0.5rem; }
+    .error { color: #e53935; margin-top: 1rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="submit-container">
+    <h1>Submit New Item</h1>
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+    <form id="submitForm" action="{{ url_for('submit_lost_item') }}" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+      <label for="title">Item Name *</label>
+      <input type="text" id="title" name="title" placeholder="Enter item name" value="{{ request.form.title or '' }}" required />
+
+      <label for="image">Item Image *</label>
+      <input type="file" id="image" name="image" accept="image/*" required />
+
+      <label for="description">Description *</label>
+      <textarea id="description" name="description" placeholder="Describe the item..." required>{{ request.form.description or '' }}</textarea>
+
+      <label for="locationText">Location (text) *</label>
+      <input type="text" id="locationText" name="location" placeholder="Enter location name" value="{{ request.form.location or '' }}" required />
+
+      <label>Select on Map (click to mark) *</label>
+      <div id="map"></div>
+      <input type="hidden" id="lat" name="latitude" value="{{ request.form.latitude or '' }}" />
+      <input type="hidden" id="lng" name="longitude" value="{{ request.form.longitude or '' }}" />
+
+      <div class="submit-button">
+        <button type="submit">
+          <img src="{{ url_for('static', filename='icons/submit.svg') }}" alt="Submit">Submit
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-QV4S+ZLlh3E2GH5mA6vRfG3kZZgNXv1p+Cn9wRDf0PE=" crossorigin=""></script>
+  <script>
+    // Initialize map
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+
+    let marker;
+    // If previous coords exist, show marker
+    const prevLat = document.getElementById('lat').value;
+    const prevLng = document.getElementById('lng').value;
+    if (prevLat && prevLng) {
+      marker = L.marker([prevLat, prevLng]).addTo(map);
+      map.setView([prevLat, prevLng], 13);
+    }
+
+    map.on('click', function(e) {
+      const { lat, lng } = e.latlng;
+      if (marker) map.removeLayer(marker);
+      marker = L.marker([lat, lng]).addTo(map);
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+    });
+
+    function validateForm() {
+      const form = document.getElementById('submitForm');
+      const required = ['title','image','description','locationText','lat','lng'];
+      for (let id of required) {
+        const el = document.getElementById(id) || document.getElementsByName(id)[0];
+        if (!el || !el.value) {
+          alert('Please fill out all required fields.');
+          return false;
+        }
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>

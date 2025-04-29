@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - LostFoundApp</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    .register-container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 320px;
+    }
+    .register-container h1 {
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .register-container input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .register-container button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .error-message {
+      color: #e53935;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <h1>Register</h1>
+    {% if error %}
+      <div class="error-message">{{ error }}</div>
+    {% endif %}
+    <form id="registerForm" action="{{ url_for('register') }}" method="post" onsubmit="return validatePasswords()">
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="password" id="password" name="password" placeholder="Password" required />
+      <input type="password" id="confirm" name="confirm_password" placeholder="Confirm Password" required />
+      <button type="submit">Register</button>
+    </form>
+  </div>
+
+  <script>
+    function validatePasswords() {
+      const pwd = document.getElementById('password').value;
+      const conf = document.getElementById('confirm').value;
+      if (pwd !== conf) {
+        alert('Passwords do not match. Please try again.');
+        document.getElementById('registerForm').reset();
+        return false;
+      }
+      return true;
+    }
+
+    // If server returned an error, clear fields
+    {% if error %}
+      document.getElementById('registerForm').reset();
+    {% endif %}
+  </script>
+</body>
+</html>
